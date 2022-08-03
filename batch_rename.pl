@@ -10,7 +10,6 @@ use Getopt::Long;
 ### batch rename items in a given folder
 ### by kiyo @ http://www.pocchong.de
 ### created: 2014-04-23
-### updated: 2016-10-06
 
 my ($option,@dirs,$ext,$key,$help,$preview,$dirmode,$case);
 GetOptions(
@@ -29,30 +28,27 @@ GetOptions(
 $key->{key2}='' if !$key->{key2};
 if (!@dirs or (!$option and !$key and !$case) or $help) {die <<USAGE;
 -----------------------------------------
-[-d READ_DIR1 DIR2]
-   #if multiple dir paths given, make sure search pattern don't mess up
+>>> batch rename files/dirs <<<
 
-[-x EXT] #only grep *.EXT
+[-d READ_DIR1 DIR2] #if multiple dir paths given, make sure search pattern don't mess up
+  # can NOT deal with subdirs!
+[-x EXT] #only get files by extension *.EXT
 [-r] #rename dirs instead of files
-
 [-p] #preview before and after name change
 
 [-o OLD_PATTERN -n NEW_PATTERN]
   #case INSENSITIVE
-  #(mostly should) accept perl-wide REGEX; use "^" when change at begin of line
+  #expected (but didn't test in depth) to support perl-wide REGEX; use "^" when change at begin of line
   #if omit OLD_PATTERN, will append NEW_PATTERN to the end (e.g. for adding new extension)
   #remove OLD_PATTERN if NEW_PATTERN is omitted
 
 [-u] OR [-l] #change case to all UPPER/lower. will do nothing if both are given
-
 [-f] #replace windows auto-numbered files.
   # e.g. file (1) -> file_01
-
 [-t] #rename photo files (jpg/png/gif/bmp/tiff) by time taken if applicable.
 
-
+flag priority:
 [-t] > [-f] > [-o xxx -n yyy]
-
 -----------------------------------------
 
 USAGE
@@ -63,8 +59,16 @@ printf "\n>>>>%s\n", $dir;
 next if !-d $dir;
 opendir (my $dh, $dir);
 my $exist={};
-while (my $file=readdir ($dh)) {
-	next if $file=~/^\.*$/;
+my $allfiles=[];
+my $max=0;
+while (my $file=readdir ($dh)) { # store all files to array so won't come to the same file if being renamed
+	next if $file=~/^\.+$/;
+	if ($file=~/\s\(\d+\)/) { # get max number for file auto named by windows, e.g. file (1)
+		$max++;
+	}
+	push @$allfiles, $file;
+}
+foreach my $file (@$allfiles) {
 	my $ext2;
 	if ($option->{timestamp}) { #grab jpg/png/gif/tiff/bmp
 		if ($file=~/\.(jpg|jpeg|png|gif|tiff|bmp)$/ix) {
@@ -100,7 +104,11 @@ while (my $file=readdir ($dh)) {
 	elsif ($option->{numbers}) {
 		if ($file=~/\s+  \(   (\d+)  \)/x) {
 			$key->{key2}=$1;
-			$file2=sprintf "%s_%02d%s",$`,$key->{key2},$';
+			if ($max) {
+				$file2=sprintf "%s_%0*d%s",$`,length($max),$key->{key2},$';
+			} else {
+				$file2=sprintf "%s_%02d%s",$`,$key->{key2},$';
+			}
 		}
 	}
 	elsif ($key->{key1} or $key->{key2}) {
