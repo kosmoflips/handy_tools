@@ -5,11 +5,9 @@ use warnings;
 use File::Spec;
 use File::Copy qw/move/;
 use Getopt::Long;
-
+use Data::Dumper;
 
 ### batch rename items in a given folder
-### by kiyo @ http://www.pocchong.de
-### created: 2014-04-23
 
 my ($option,@dirs,$ext,$key,$help,$preview,$dirmode,$case);
 GetOptions(
@@ -25,7 +23,10 @@ GetOptions(
 	"uc"=>\$case->{all_uc},
 	"lc"=>\$case->{all_lc},
 );
-$key->{key2}='' if !$key->{key2};
+if (!$key->{key2}) {
+	$key->{key2}='' if length ($key->{key2})==0;
+}
+
 if (!@dirs or (!$option and !$key and !$case) or $help) {die <<USAGE;
 -----------------------------------------
 >>> batch rename files/dirs <<<
@@ -113,10 +114,10 @@ foreach my $file (@$allfiles) {
 	}
 	elsif ($key->{key1} or $key->{key2}) {
 		if ($key->{key1}) {
-			$key->{key2}='' if !$key->{key2};
+			# $key->{key2}='' if !$key->{key2};
 			$file2=~s/$key->{key1}/$key->{key2}/xig;
 		}
-		elsif (!$key->{key1} and $key->{key2}) {
+		elsif (!$key->{key1} and ($key->{key2} or length($key->{keys}) >0 )) {
 			$file2.=$key->{key2};
 		}
 	}
