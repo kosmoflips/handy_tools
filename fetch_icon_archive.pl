@@ -24,8 +24,9 @@ if ($help or !@urls or !$dldir) {die <<USAGE;
 ### download icon set from iconarchive.com
 
 [-u ICON_PACK_URL1 URL2 ...] # one or more icon pack URLs
-  # if a pack contains multiple pages, give them separately as this script won't parse for it
+  - if a pack contains multiple pages, give them separately as this script won't parse for it
 [-d LOCAL_DIR] # where the downloaded icon files should be saved
+  - a subdir `icondownload` will be created here
 
 # note that only the default download PNG plus ICO will be retrieved (for PNG, mostly would be 512px or the largest available one below it).
 -----------------------------------------
@@ -67,7 +68,7 @@ foreach my $url (@urls) {
 								printf "  %s", $fname;
 							}
 							if (getstore($icolink2, $file2)) {
-								print "  ico";
+								print " + ico";
 							}
 							print "\n";
 						}
